@@ -1,0 +1,730 @@
+buildCmd: mvn -e -X -Dlicense.skip=true -Dmaven.enforcer.skip=true  -Denforcer.skip=true -Dair.check.skip-all=true -Dmaven.test.skip=true compile
+testCmd: true
+skipVerification: true
+cbmcArguments:
+  # Do not generate coverage comments on generated tests.
+  java-generate-no-comments: true
+  # Constrain the size of arrays created in the analyzed code.
+  java-max-vla-length: 100000
+phases:
+  -
+    # Phase 0 PRETTY, SIMPLE and SMART - pretty tests, do not test private methods directly, Smart-Harness
+    timeout: 180
+    cbmcArguments:
+      # Use simple models first containers (ArrayList, HashMap, HashSet,...) will have a maximum size of one.
+      classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: 1500
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 10
+      # Bound the length of input strings.
+      max-nondet-string-length: 10
+      # Add constraint that strings are printable
+      string-printable: true
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: false
+      # Set an upper bound on loop unwinding.
+      unwind: 1
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [private]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # Instrument the file as opposed to the function only
+      cover-only: file
+      # Set string input value
+      string-input-value: ["foo", "Bar", "BAZ", "1234", "1a 2b 3c", "A1B2C3", "a,b,c", "1", "2", "3", "a/b/c", "a'b'c", ",", "/", "'"]
+      # Instantiate classes using the simplest constructor strategy
+      smart-harness: simplest-constructor-and-nondet
+  -
+    # Phase 1 PRETTY AND COMPLEX - standard models only, pretty tests, do not test private methods directly, input factory
+    timeout: 180
+    cbmcArguments:
+      # Use the standard models library
+      classpath: '/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: false
+      # never initialize reference-typed parameter to the entry point with null
+      java-assume-inputs-non-null: true
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 10
+      # Bound the length of input strings.
+      max-nondet-string-length: 10
+      # Add constraint that strings are printable
+      string-printable: true
+      # Set string input value
+      string-input-value: ["foo", "Bar", "BAZ", "1234", "1a 2b 3c", "A1B2C3", "a,b,c", "1", "2", "3", "a/b/c", "a'b'c", ",", "/", "'"]
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: false
+      # Set an upper bound on loop unwinding.
+      unwind: 2
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [private]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # instrument the file as opposed to the function only
+      cover-only: file
+      # Limit input factory recursive depth (default 0 = no recursion allowed)
+      java-test-input-factory-bmc-recursion-limit: 4
+  -
+    # Phase 2 FIFO Strategy - pretty tests, do not test private methods directly, fifo
+    timeout: 100
+    cbmcArguments:
+      # Use the standard models library
+      classpath: '/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: false
+      # never initialize reference-typed parameter to the entry point with null
+      java-assume-inputs-non-null: true
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 30
+      # Add constraint that strings are printable
+      max-nondet-string-length: 100
+      # Explores the program tree breadth-first.
+      paths: fifo
+      # Set string input value
+      string-input-value: ["foo", "Bar", "BAZ", "1234", "1a 2b 3c", "A1B2C3", "a,b,c", "1", "2", "3", "a/b/c", "a'b'c", ",", "/", "'"]
+      # Add constraint that strings are printable
+      string-printable: true
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: false
+      # Set an upper bound on loop unwinding.
+      unwind: false
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [private]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # instrument the file as opposed to the function only
+      cover-only: file
+  -
+    # Phase 3 Exceptions - do not test private methods directly
+    timeout: 180
+    cbmcArguments:
+      # Use simple models containers first (ArrayList, HashMap, HashSet,...) will have a maximum size of one.
+      classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: false
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 30
+      # Bound the length of input strings.
+      max-nondet-string-length: 30
+      # Add constraint that strings are printable
+      string-printable: false
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: true
+      # Set an upper bound on loop unwinding.
+      unwind: 3
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [private]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # instrument the file as opposed to the function only
+      cover-only: file
+  -
+    # Phase 4 Direct testing - test private methods directly, increased reflection
+    timeout: 180
+    cbmcArguments:
+      # Use simple models containers first (ArrayList, HashMap, HashSet,...) will have a maximum size of one.
+      classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: 1500
+      # never initialize reference-typed parameter to the entry point with null
+      java-assume-inputs-non-null: true
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 10
+      # Bound the length of input strings.
+      max-nondet-string-length: 10
+      # Add constraint that strings are printable
+      string-printable: true
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: false
+      # Set an upper bound on loop unwinding.
+      unwind: 1
+      # Set string input value
+      string-input-value: ["foo", "Bar", "BAZ", "1234", "1a 2b 3c", "A1B2C3", "a,b,c", "1", "2", "3", "a/b/c", "a'b'c", ",", "/", "'"]
+      # If the logs contain output of the following then proceed to phase X
+    nextPhase:
+      # If the function is not analysable then do not pass onto the next phase
+      not_analyzed: null
+  -
+    # PHASE 5 Mocking - aggressive mocking, do not test private methods directly
+    timeout: 180
+    cbmcArguments:
+      # Use simple models containers first (ArrayList, HashMap, HashSet,...) will have a maximum size of one.
+      classpath: '/tools/cbmc/models-simple-overlay.jar:/tools/cbmc/models.jar:.'
+      # Set a limit on the number of instructions that can be generated as part of a test trace.
+      depth: 3000
+      # never initialize reference-typed parameter to the entry point with null
+      java-assume-inputs-non-null: true
+      # Only load the class (and related inner/outer classes) containing the method under test,
+      load-containing-class-only: true
+      # Maximum allowed length for an array passed as test input.
+      max-nondet-array-length: 30
+      # Bound the length of input strings.
+      max-nondet-string-length: 100
+      # Add constraint that strings are printable
+      string-printable: false
+      # Make implicit runtime exceptions explicit.
+      throw-runtime-exceptions: true
+      # Set an upper bound on loop unwinding.
+      unwind: 3
+      # Do not test any methods that have the specified access level.
+      do-not-test-methods-with-access: [private]
+      # Instrument the entry point function only.
+      cover-function-only: false
+      # instrument the file as opposed to the function only
+      cover-only: file
+units:
+ - target:
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/bitmask/OpenBitSet.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/bitmask/OpenBitSet.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/bitmask/OpenBitSet$BitUtil.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/bitmask/OpenBitSet.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/bitmask/LongBitMask.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/bitmask/LongBitMask.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/bitmask/AllSetButLastBitMask.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/bitmask/AllSetButLastBitMask.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/bitmask/BitMask.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/bitmask/BitMask.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/bitmask/AllSetBitMask.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/bitmask/AllSetBitMask.java
+ - target:
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/AnnotationDefinition.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/AnnotationDefinition.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/AnnotationDefinition$AnnotationPropertyVal.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/AnnotationDefinition.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/PropertyMap.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/PropertyMap.java
+ - target:
+   - dir: drools-core/target/classes
+     file: org/drools/core/rule/constraint/EvaluatorHelper.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/rule/constraint/EvaluatorHelper.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/spi/Evaluator.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/spi/Evaluator.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/common/InternalFactHandle.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/common/InternalFactHandle.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/rule/Pattern.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/rule/Pattern.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/common/InternalWorkingMemory.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/common/InternalWorkingMemory.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/base/mvel/MVELCompilationUnit.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/base/mvel/MVELCompilationUnit.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/base/EvaluatorWrapper.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/base/EvaluatorWrapper.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/common/EventFactHandle.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/common/EventFactHandle.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/spi/InternalReadAccessor.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/spi/InternalReadAccessor.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/rule/Declaration.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/rule/Declaration.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/spi/Tuple.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/spi/Tuple.java
+ - target:
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/PersisterHelper.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/PersisterHelper.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProcessMarshaller.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProcessMarshaller.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/Drools.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/Drools.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/common/NetworkNode.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/common/NetworkNode.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufInputMarshaller$TupleKey.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufInputMarshaller.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/MarshallerWriteContext.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/MarshallerWriteContext.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/traits/TraitFactory.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/traits/TraitFactory.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/reteoo/PropagationQueuingNode$PropagateAction.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/reteoo/PropagationQueuingNode.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$Header.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/reteoo/WindowNode.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/reteoo/WindowNode.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/impl/StatefulKnowledgeSessionImpl$WorkingMemoryReteAssertAction.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/impl/StatefulKnowledgeSessionImpl.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$ActionQueue$Expire.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$Activation.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/rule/BehaviorManager.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/rule/BehaviorManager.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/KeyStoreHelper.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/KeyStoreHelper.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$Signature$Builder.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$ActionQueue$LogicalRetract.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/spi/Activation.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/spi/Activation.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufInputMarshaller$ActivationKey.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufInputMarshaller.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/common/InternalWorkingMemory.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/common/InternalWorkingMemory.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$Version$Builder.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/common/ProjectClassLoader.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/common/ProjectClassLoader.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/common/DroolsObjectOutputStream.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/common/DroolsObjectOutputStream.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$Header$Builder.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$ActionQueue$Assert.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/reteoo/TerminalNode.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/reteoo/TerminalNode.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/RuleBaseConfiguration.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/RuleBaseConfiguration.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/spi/Tuple.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/spi/Tuple.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$RuntimeClassDef$Builder.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$Tuple$Builder.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/common/WorkingMemoryAction.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/common/WorkingMemoryAction.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufInputMarshaller$PBActivationsFilter.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufInputMarshaller.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$Signature.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$Activation$Builder.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$ActionQueue$Action.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$Version.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$Tuple.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$ActionQueue$Propagate.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/rule/SlidingTimeWindow$BehaviorExpireWMAction.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/rule/SlidingTimeWindow.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/impl/StatefulKnowledgeSessionImpl$WorkingMemoryReteExpireAction.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/impl/StatefulKnowledgeSessionImpl.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/reteoo/KieComponentFactory.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/reteoo/KieComponentFactory.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$RuntimeClassDef.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/common/InternalFactHandle.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/common/InternalFactHandle.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/common/DroolsObjectInputStream.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/common/DroolsObjectInputStream.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/definitions/InternalKnowledgePackage.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/definitions/InternalKnowledgePackage.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$ActionQueue$ActionType.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/impl/InternalKnowledgeBase.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/impl/InternalKnowledgeBase.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/reteoo/LeftTupleSource.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/reteoo/LeftTupleSource.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/beliefsystem/simple/BeliefSystemLogicalCallback.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/beliefsystem/simple/BeliefSystemLogicalCallback.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/MarshallerReaderContext.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/MarshallerReaderContext.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$ActionQueue$BehaviorExpire.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/reteoo/NodeTypeEnums.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/reteoo/NodeTypeEnums.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/phreak/PropagationEntry$AbstractPropagationEntry.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/phreak/PropagationEntry.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$Header$StrategyIndex$Builder.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/marshalling/impl/ProtobufMessages$Header$StrategyIndex.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/marshalling/impl/ProtobufMessages.java
+ - target:
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/Drools.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/Drools.java
+ - target:
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/traits/TraitFactory.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/traits/TraitFactory.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/HierarchyEncoderImpl$ImmutableBitSet.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/HierarchyEncoderImpl.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/traits/AbstractTraitFactory$1.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/traits/AbstractTraitFactory.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/TripleStore.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/TripleStore.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/traits/TraitTriplePropertyWrapperClassBuilderImpl.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/traits/TraitTriplePropertyWrapperClassBuilderImpl.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/traits/TraitRegistry.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/traits/TraitRegistry.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/ClassBuilderFactory.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/ClassBuilderFactory.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/HierarchyEncoder.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/HierarchyEncoder.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/traits/TraitRegistry$CachingHierarcyEncoderImpl.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/traits/TraitRegistry.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/ClassUtils.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/ClassUtils.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/base/ClassFieldAccessorStore.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/base/ClassFieldAccessorStore.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/rule/DialectRuntimeRegistry.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/rule/DialectRuntimeRegistry.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/traits/TraitTypeEnum.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/traits/TraitTypeEnum.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/HierarchyEncoderImpl.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/HierarchyEncoderImpl.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/AbstractCodedHierarchyImpl.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/AbstractCodedHierarchyImpl.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/traits/TraitTripleProxyClassBuilderImpl.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/traits/TraitTripleProxyClassBuilderImpl.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/reteoo/KieComponentFactory.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/reteoo/KieComponentFactory.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/AbstractBitwiseHierarchyImpl.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/AbstractBitwiseHierarchyImpl.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/definitions/impl/KnowledgePackageImpl.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/definitions/impl/KnowledgePackageImpl.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/definitions/InternalKnowledgePackage.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/definitions/InternalKnowledgePackage.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/impl/InternalKnowledgeBase.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/impl/InternalKnowledgeBase.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/traits/VirtualPropertyMode.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/traits/VirtualPropertyMode.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/TripleFactory.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/TripleFactory.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/traits/AbstractTraitFactory.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/traits/AbstractTraitFactory.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/traits/TraitMapPropertyWrapperClassBuilderImpl.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/traits/TraitMapPropertyWrapperClassBuilderImpl.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/traits/AbstractPropertyWrapperClassBuilderImpl.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/traits/AbstractPropertyWrapperClassBuilderImpl.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/definitions/ResourceTypePackageRegistry.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/definitions/ResourceTypePackageRegistry.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/traits/AbstractProxyClassBuilderImpl.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/traits/AbstractProxyClassBuilderImpl.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/AbstractBitwiseHierarchyImpl$HierCodeComparator.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/AbstractBitwiseHierarchyImpl.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/traits/TraitMapProxyClassBuilderImpl.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/traits/TraitMapProxyClassBuilderImpl.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/RuleBaseConfiguration.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/RuleBaseConfiguration.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/CodedHierarchyImpl.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/CodedHierarchyImpl.java
+ - target:
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/AbstractHashTable.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/AbstractHashTable.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/AbstractHashTable$ObjectComparator.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/AbstractHashTable.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/Iterator.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/Iterator.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/HashTableIterator.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/HashTableIterator.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/AbstractHashTable$EqualityEquals.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/AbstractHashTable.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/Entry.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/Entry.java
+ - target:
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/ClassUtils.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/ClassUtils.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/ClassUtils$PropertyInClass.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/ClassUtils.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/common/DroolsObjectInputStream.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/common/DroolsObjectInputStream.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/common/DroolsObjectOutputStream.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/common/DroolsObjectOutputStream.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/StringUtils.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/StringUtils.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/ClassUtils$1.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/ClassUtils.java
+ - target:
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/IoUtils.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/IoUtils.java
+ - target:
+   - dir: drools-core/target/classes
+     file: org/drools/core/base/ValueType.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/base/ValueType.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/base/ValueType$1.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/base/ValueType.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/base/ValueType$BigIntegerValueType.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/base/ValueType.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/base/ValueType$BigDecimalValueType.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/base/ValueType.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/base/ValueType$StringValueType.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/base/ValueType.java
+ - target:
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/bitmask/OpenBitSet$BitUtil.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/bitmask/OpenBitSet.java
+ - target:
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/NumberUtils.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/NumberUtils.java
+ - target:
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/StringUtils.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/StringUtils.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/StringUtils$SIMILARITY_STRATS.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/StringUtils.java
+ - target:
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/BuildUtils.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/BuildUtils.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/MVELSafeHelper$MVELEvaluatorHolder.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/MVELSafeHelper.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/StringUtils.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/StringUtils.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/factmodel/FieldDefinition.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/factmodel/FieldDefinition.java
+   - dir: drools-core/target/classes
+     file: org/drools/core/util/MVELSafeHelper.class
+     sourceDir: drools-core/src/main/java
+     sourceFile: org/drools/core/util/MVELSafeHelper.java
